@@ -1,0 +1,31 @@
+{
+    "name": "everyworkflow/magento-connector-bundle",
+    "description": "Magento connector bundle for every workflow project.",
+    "type": "package",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "EveryWorkflow",
+            "email": "everyworkflow@gmail.com"
+        }
+    ],
+    "require": {
+        "everyworkflow/remote-bundle": "dev-main",
+        "everyworkflow/ecommerce-bundle": "dev-main"
+    },
+    "autoload": {
+        "psr-4": {
+            "EveryWorkflow\\MagentoConnectorBundle\\": "./"
+        },
+        "exclude-from-classmap": [
+            "Resources",
+            "Tests"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "EveryWorkflow\\MagentoConnectorBundle\\Tests\\": "Tests/"
+        }
+    },
+    "minimum-stability": "dev"
+}
