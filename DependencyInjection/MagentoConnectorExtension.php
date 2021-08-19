@@ -29,8 +29,8 @@ class MagentoConnectorExtension extends Extension implements PrependExtensionInt
         $loader = new PhpFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.php');
 
-        $container->registerForAutoconfiguration(ImporterInterface::class)
-            ->addTag('everyworkflow.magento_connector.importer');
+//        $container->registerForAutoconfiguration(ImporterInterface::class)
+//            ->addTag('everyworkflow.magento_connector.importer');
     }
 
     /**

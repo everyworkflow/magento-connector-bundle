@@ -11,17 +11,21 @@ namespace EveryWorkflow\MagentoConnectorBundle\Remote\Customer;
 use EveryWorkflow\CustomerBundle\Entity\CustomerEntityInterface;
 use EveryWorkflow\CustomerBundle\Repository\CustomerRepositoryInterface;
 use EveryWorkflow\RemoteBundle\Model\RemoteResponse;
+use Psr\Log\LoggerInterface;
 
 class SearchResponse extends RemoteResponse implements SearchResponseInterface
 {
     protected CustomerRepositoryInterface $customerRepository;
+    protected LoggerInterface $logger;
 
     public function __construct(
         CustomerRepositoryInterface $customerRepository,
+        LoggerInterface             $ewRemoteErrorLogger,
         array                       $data = []
     ) {
         parent::__construct($data);
         $this->customerRepository = $customerRepository;
+        $this->logger = $ewRemoteErrorLogger;
     }
 
     public function getCustomers(): array
@@ -30,7 +34,17 @@ class SearchResponse extends RemoteResponse implements SearchResponseInterface
         $customerItems = $this->data['items'] ?? [];
 
         foreach ($customerItems as $item) {
-            $customers[] = $this->mapMageCustomer($item);
+            try {
+                $customers[] = $this->mapMageCustomer($item);
+            } catch (\Exception $e) {
+                try {
+                    $itemJson = json_encode($item);
+                } catch (\Exception $e) {
+                    // Skip if unable to capture attribute data
+                    $itemJson = '';
+                }
+                $this->logger->error('Error: magento_customer_map | Item: ' . $itemJson . ' | Message: ' . $e->getMessage());
+            }
         }
 
         return $customers;
@@ -53,9 +67,9 @@ class SearchResponse extends RemoteResponse implements SearchResponseInterface
 
         if (isset($mageCustomerData['custom_attributes']) && is_array($mageCustomerData['custom_attributes'])) {
             foreach ($mageCustomerData['custom_attributes'] as $customAttr) {
-                if (isset($customAttr['attribute_code'])) {
-                    if (isset($availableAttributeCodes[$customAttr['attribute_code']])) {
-                        $customerData[$customAttr['attribute_code']] = $mageCustomerData[$customAttr['attribute_code']];
+                if (isset($customAttr['attribute_code'], $customAttr['value'])) {
+                    if (in_array($customAttr['attribute_code'], $availableAttributeCodes, true)) {
+                        $customerData[$customAttr['attribute_code']] = $customAttr['value'];
                     }
                 }
             }

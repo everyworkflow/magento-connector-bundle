@@ -47,7 +47,7 @@ return function (ContainerConfigurator $configurator) {
         ->arg('$importers', tagged_iterator('everyworkflow.magento_connector.importer'));
 
     /*
-     * For customer importer
+     * For customer attribute importer
      * */
     $services->set('ew_magento_customer_attribute_service', service(MagentoService::class))
         ->arg('$client', service(MagentoRestClient::class))
@@ -58,8 +58,11 @@ return function (ContainerConfigurator $configurator) {
         );
     $services->set(CustomerAttributeImporter::class)
         ->arg('$magentoService', service('ew_magento_customer_attribute_service'))
-        ->tag('everyworkflow.magento_connector.importer', ['priority' => 100]);
+        ->tag('everyworkflow.magento_connector.importer', ['priority' => 10000]);
 
+    /*
+     * For customer importer
+     * */
     $services->set('ew_magento_customer_search_service', service(MagentoService::class))
         ->arg('$client', service(MagentoRestClient::class))
         ->arg('$request', service(\EveryWorkflow\MagentoConnectorBundle\Remote\Customer\SearchRequest::class))
@@ -69,10 +72,10 @@ return function (ContainerConfigurator $configurator) {
         );
     $services->set(CustomerImporter::class)
         ->arg('$magentoService', service('ew_magento_customer_search_service'))
-        ->tag('everyworkflow.magento_connector.importer', ['priority' => 110]);
+        ->tag('everyworkflow.magento_connector.importer', ['priority' => 9090]);
 
     /*
-     * For catalog product importer
+     * For catalog product attribute importer
      * */
     $services->set('ew_magento_catalog_product_attribute_service', service(MagentoService::class))
         ->arg('$client', service(MagentoRestClient::class))
@@ -86,8 +89,11 @@ return function (ContainerConfigurator $configurator) {
         );
     $services->set(CatalogProductAttributeImporter::class)
         ->arg('$magentoService', service('ew_magento_catalog_product_attribute_service'))
-        ->tag('everyworkflow.magento_connector.importer', ['priority' => 1000]);
+        ->tag('everyworkflow.magento_connector.importer', ['priority' => 9000]);
 
+    /*
+     * For catalog product importer
+     * */
     $services->set('ew_magento_catalog_product_search_service', service(MagentoService::class))
         ->arg('$client', service(MagentoRestClient::class))
         ->arg('$request', service(\EveryWorkflow\MagentoConnectorBundle\Remote\CatalogProduct\SearchRequest::class))
@@ -97,5 +103,5 @@ return function (ContainerConfigurator $configurator) {
         );
     $services->set(CatalogProductImporter::class)
         ->arg('$magentoService', service('ew_magento_catalog_product_search_service'))
-        ->tag('everyworkflow.magento_connector.importer', ['priority' => 1010]);
+        ->tag('everyworkflow.magento_connector.importer', ['priority' => 8090]);
 };

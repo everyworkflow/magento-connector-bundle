@@ -25,18 +25,22 @@ class CustomerAttributeImporter extends Importer implements CustomerAttributeImp
     public function __construct(
         MagentoServiceInterface      $magentoService,
         AttributeRepositoryInterface $attributeRepository,
-        LoggerInterface $logger
+        LoggerInterface              $ewRemoteErrorLogger
     ) {
         $this->magentoService = $magentoService;
         $this->attributeRepository = $attributeRepository;
-        $this->logger = $logger;
+        $this->logger = $ewRemoteErrorLogger;
     }
 
     public function execute(string $type = ImportProcessorInterface::TYPE_INCREMENTAL): void
     {
-        /** @var AttributeResponseInterface $response */
-        $response = $this->magentoService->send();
-        $this->saveAttributesFromResponse($response);
+        try {
+            /** @var AttributeResponseInterface $response */
+            $response = $this->magentoService->send();
+            $this->saveAttributesFromResponse($response);
+        } catch (\Exception $e) {
+            $this->logger->error('Error: customer_attribute_import | PageNo: ' . $currentPage . ' | Message: ' . $e->getMessage());
+        }
     }
 
     protected function saveAttributesFromResponse(AttributeResponseInterface $response): void

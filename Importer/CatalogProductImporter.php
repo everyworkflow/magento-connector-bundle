@@ -25,11 +25,11 @@ class CatalogProductImporter extends Importer implements CatalogProductImporterI
     public function __construct(
         MagentoServiceInterface           $magentoService,
         CatalogProductRepositoryInterface $catalogProductRepository,
-        LoggerInterface $logger
+        LoggerInterface                   $ewRemoteErrorLogger
     ) {
         $this->magentoService = $magentoService;
         $this->catalogProductRepository = $catalogProductRepository;
-        $this->logger = $logger;
+        $this->logger = $ewRemoteErrorLogger;
     }
 
     public function execute(string $type = ImportProcessorInterface::TYPE_INCREMENTAL): void
@@ -53,14 +53,18 @@ class CatalogProductImporter extends Importer implements CatalogProductImporterI
         $currentPage = 1;
         $totalPage = 1;
         while ($currentPage <= $totalPage) {
-            $this->magentoService->getSearchCriteria()
-                ->addFilter('created_at', $lastSyncCustomer->getData('updated_at_magento'), 'gteq')
-                ->setPageSize($pageSize)
-                ->setCurrentPage($currentPage);
-            /** @var SearchResponseInterface $response */
-            $response = $this->magentoService->send();
-            $this->saveProductsFromResponse($response);
-            $totalPage = $this->getTotalPageCount($response, $pageSize);
+            try {
+                $this->magentoService->getSearchCriteria()
+                    ->addFilter('created_at', $lastSyncCustomer->getData('updated_at_magento'), 'gteq')
+                    ->setPageSize($pageSize)
+                    ->setCurrentPage($currentPage);
+                /** @var SearchResponseInterface $response */
+                $response = $this->magentoService->send();
+                $this->saveProductsFromResponse($response);
+                $totalPage = $this->getTotalPageCount($response, $pageSize);
+            } catch (\Exception $e) {
+                $this->logger->error('Error: catalog_product_incremental_import | PageNo: ' . $currentPage . ' | Message: ' . $e->getMessage());
+            }
             $currentPage++;
             sleep(2);
         }
@@ -72,13 +76,17 @@ class CatalogProductImporter extends Importer implements CatalogProductImporterI
         $currentPage = 1;
         $totalPage = 1;
         while (($currentPage <= $totalPage) && ($currentPage < 5)) {
-            $this->magentoService->getSearchCriteria()
-                ->setPageSize($pageSize)
-                ->setCurrentPage($currentPage);
-            /** @var SearchResponseInterface $response */
-            $response = $this->magentoService->send();
-            $this->saveProductsFromResponse($response);
-            $totalPage = $this->getTotalPageCount($response, $pageSize);
+            try {
+                $this->magentoService->getSearchCriteria()
+                    ->setPageSize($pageSize)
+                    ->setCurrentPage($currentPage);
+                /** @var SearchResponseInterface $response */
+                $response = $this->magentoService->send();
+                $this->saveProductsFromResponse($response);
+                $totalPage = $this->getTotalPageCount($response, $pageSize);
+            } catch (\Exception $e) {
+                $this->logger->error('Error: catalog_product_full_import | PageNo: ' . $currentPage . ' | Message: ' . $e->getMessage());
+            }
             $currentPage++;
             sleep(2);
         }

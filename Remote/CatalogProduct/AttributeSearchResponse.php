@@ -12,6 +12,7 @@ use EveryWorkflow\CatalogProductBundle\Repository\CatalogProductRepositoryInterf
 use EveryWorkflow\EavBundle\Attribute\BaseAttributeInterface;
 use EveryWorkflow\EavBundle\Factory\AttributeFactoryInterface;
 use EveryWorkflow\RemoteBundle\Model\RemoteResponse;
+use Psr\Log\LoggerInterface;
 
 class AttributeSearchResponse extends RemoteResponse implements AttributeSearchResponseInterface
 {
@@ -24,15 +25,18 @@ class AttributeSearchResponse extends RemoteResponse implements AttributeSearchR
 
     protected CatalogProductRepositoryInterface $catalogProductRepository;
     protected AttributeFactoryInterface $attributeFactory;
+    protected LoggerInterface $logger;
 
     public function __construct(
         CatalogProductRepositoryInterface $catalogProductRepository,
         AttributeFactoryInterface         $attributeFactory,
+        LoggerInterface                   $ewRemoteErrorLogger,
         array                             $data = []
     ) {
         parent::__construct($data);
         $this->catalogProductRepository = $catalogProductRepository;
         $this->attributeFactory = $attributeFactory;
+        $this->logger = $ewRemoteErrorLogger;
     }
 
     /**
@@ -44,7 +48,17 @@ class AttributeSearchResponse extends RemoteResponse implements AttributeSearchR
         $attributeItems = $this->data['items'] ?? [];
 
         foreach ($attributeItems as $item) {
-            $attributes[] = $this->mapMageAttribute($item);
+            try {
+                $attributes[] = $this->mapMageAttribute($item);
+            } catch (\Exception $e) {
+                try {
+                    $itemJson = json_encode($item);
+                } catch (\Exception $e) {
+                    // Skip if unable to capture attribute data
+                    $itemJson = '';
+                }
+                $this->logger->error('Error: magento_product_attribute_map | Item: ' . $itemJson . ' | Message: ' . $e->getMessage());
+            }
         }
 
         return $attributes;
@@ -57,6 +71,7 @@ class AttributeSearchResponse extends RemoteResponse implements AttributeSearchR
             'name' => $mageAttrData['default_frontend_label'] ?? '',
             'entity_code' => $this->catalogProductRepository->getEntityCode(),
             'is_used_in_grid' => in_array($mageAttrData['attribute_code'], self::USED_IN_GRID_ATTRIBUTES, true),
+            'is_used_in_form' => true, // Enable attribute by default in form
             'is_required' => (bool)$mageAttrData['is_required'] ?? false,
             'sort_order' => $mageAttrData['position'] ?? '999',
         ];
@@ -65,6 +80,7 @@ class AttributeSearchResponse extends RemoteResponse implements AttributeSearchR
         switch ($frontendInput) {
             case 'hidden':
             {
+                $attributeData['is_used_in_form'] = false;
                 $attributeData['is_readonly'] = true;
                 return $this->attributeFactory->createAttributeFromType('text_attribute', $attributeData);
             }

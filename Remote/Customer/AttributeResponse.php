@@ -12,6 +12,7 @@ use EveryWorkflow\CustomerBundle\Repository\CustomerRepositoryInterface;
 use EveryWorkflow\EavBundle\Attribute\BaseAttributeInterface;
 use EveryWorkflow\EavBundle\Factory\AttributeFactoryInterface;
 use EveryWorkflow\RemoteBundle\Model\RemoteResponse;
+use Psr\Log\LoggerInterface;
 
 class AttributeResponse extends RemoteResponse implements AttributeResponseInterface
 {
@@ -26,15 +27,18 @@ class AttributeResponse extends RemoteResponse implements AttributeResponseInter
 
     protected AttributeFactoryInterface $attributeFactory;
     protected CustomerRepositoryInterface $customerRepository;
+    protected LoggerInterface $logger;
 
     public function __construct(
         AttributeFactoryInterface   $attributeFactory,
         CustomerRepositoryInterface $customerRepository,
+        LoggerInterface             $ewRemoteErrorLogger,
         array                       $data = []
     ) {
         parent::__construct($data);
         $this->attributeFactory = $attributeFactory;
         $this->customerRepository = $customerRepository;
+        $this->logger = $ewRemoteErrorLogger;
     }
 
     public function handle(array $responseData): self
@@ -52,7 +56,17 @@ class AttributeResponse extends RemoteResponse implements AttributeResponseInter
         $attributeItems = $this->data['items'] ?? [];
 
         foreach ($attributeItems as $item) {
-            $attributes[] = $this->mapMageAttribute($item);
+            try {
+                $attributes[] = $this->mapMageAttribute($item);
+            } catch (\Exception $e) {
+                try {
+                    $itemJson = json_encode($item);
+                } catch (\Exception $e) {
+                    // Skip if unable to capture attribute data
+                    $itemJson = '';
+                }
+                $this->logger->error('Error: magento_customer_attribute_map | Item: ' . $itemJson . ' | Message: ' . $e->getMessage());
+            }
         }
 
         return $attributes;
@@ -65,7 +79,8 @@ class AttributeResponse extends RemoteResponse implements AttributeResponseInter
             'name' => $mageAttrData['frontend_label'] ?? '',
             'entity_code' => $this->customerRepository->getEntityCode(),
             'is_used_in_grid' => in_array($mageAttrData['attribute_code'], self::USED_IN_GRID_ATTRIBUTES, true),
-            'is_required' => (bool)$mageAttrData['required'] ?? false,
+            'is_used_in_form' => true, // Enable attribute by default in form
+            'is_required' => $mageAttrData['required'] ?? false,
             'sort_order' => $mageAttrData['sort_order'] ?? '999',
         ];
 
@@ -73,6 +88,7 @@ class AttributeResponse extends RemoteResponse implements AttributeResponseInter
         switch ($frontendInput) {
             case 'hidden':
             {
+                $attributeData['is_used_in_form'] = false;
                 $attributeData['is_readonly'] = true;
                 return $this->attributeFactory->createAttributeFromType('text_attribute', $attributeData);
             }

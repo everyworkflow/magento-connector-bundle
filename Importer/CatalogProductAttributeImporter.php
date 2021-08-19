@@ -26,11 +26,11 @@ class CatalogProductAttributeImporter extends Importer implements CatalogProduct
     public function __construct(
         MagentoServiceInterface      $magentoService,
         AttributeRepositoryInterface $attributeRepository,
-        LoggerInterface $logger
+        LoggerInterface              $ewRemoteErrorLogger
     ) {
         $this->magentoService = $magentoService;
         $this->attributeRepository = $attributeRepository;
-        $this->logger = $logger;
+        $this->logger = $ewRemoteErrorLogger;
     }
 
     public function execute(string $type = ImportProcessorInterface::TYPE_INCREMENTAL): void
@@ -39,13 +39,17 @@ class CatalogProductAttributeImporter extends Importer implements CatalogProduct
         $currentPage = 1;
         $totalPage = 1;
         while ($currentPage <= $totalPage) {
-            $this->magentoService->getSearchCriteria()
-                ->setPageSize($pageSize)
-                ->setCurrentPage($currentPage);
-            /** @var AttributeSearchResponseInterface $response */
-            $response = $this->magentoService->send();
-            $this->saveAttributesFromResponse($response);
-            $totalPage = $this->getTotalPageCount($response, $pageSize);
+            try {
+                $this->magentoService->getSearchCriteria()
+                    ->setPageSize($pageSize)
+                    ->setCurrentPage($currentPage);
+                /** @var AttributeSearchResponseInterface $response */
+                $response = $this->magentoService->send();
+                $this->saveAttributesFromResponse($response);
+                $totalPage = $this->getTotalPageCount($response, $pageSize);
+            } catch (\Exception $e) {
+                $this->logger->error('Error: catalog_product_attribute_import | PageNo: ' . $currentPage . ' | Message: ' . $e->getMessage());
+            }
             $currentPage++;
             sleep(2);
         }

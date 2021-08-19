@@ -25,11 +25,11 @@ class CustomerImporter extends Importer implements CustomerImporterInterface
     public function __construct(
         MagentoServiceInterface     $magentoService,
         CustomerRepositoryInterface $customerRepository,
-        LoggerInterface             $logger
+        LoggerInterface             $ewRemoteErrorLogger
     ) {
         $this->magentoService = $magentoService;
         $this->customerRepository = $customerRepository;
-        $this->logger = $logger;
+        $this->logger = $ewRemoteErrorLogger;
     }
 
     public function execute(string $type = ImportProcessorInterface::TYPE_INCREMENTAL): void
@@ -53,14 +53,18 @@ class CustomerImporter extends Importer implements CustomerImporterInterface
         $currentPage = 1;
         $totalPage = 1;
         while ($currentPage <= $totalPage) {
-            $this->magentoService->getSearchCriteria()
-                ->addFilter('created_at', $lastSyncCustomer->getData('updated_at_magento'), 'gteq')
-                ->setPageSize($pageSize)
-                ->setCurrentPage($currentPage);
-            /** @var SearchResponseInterface $response */
-            $response = $this->magentoService->send();
-            $this->saveCustomersFromResponse($response);
-            $totalPage = $this->getTotalPageCount($response, $pageSize);
+            try {
+                $this->magentoService->getSearchCriteria()
+                    ->addFilter('created_at', $lastSyncCustomer->getData('updated_at_magento'), 'gteq')
+                    ->setPageSize($pageSize)
+                    ->setCurrentPage($currentPage);
+                /** @var SearchResponseInterface $response */
+                $response = $this->magentoService->send();
+                $this->saveCustomersFromResponse($response);
+                $totalPage = $this->getTotalPageCount($response, $pageSize);
+            } catch (\Exception $e) {
+                $this->logger->error('Error: customer_incremental_import | PageNo: ' . $currentPage . ' | Message: ' . $e->getMessage());
+            }
             $currentPage++;
             sleep(2);
         }
@@ -72,13 +76,17 @@ class CustomerImporter extends Importer implements CustomerImporterInterface
         $currentPage = 1;
         $totalPage = 1;
         while (($currentPage <= $totalPage) && ($currentPage < 5)) {
-            $this->magentoService->getSearchCriteria()
-                ->setPageSize($pageSize)
-                ->setCurrentPage($currentPage);
-            /** @var SearchResponseInterface $response */
-            $response = $this->magentoService->send();
-            $this->saveCustomersFromResponse($response);
-            $totalPage = $this->getTotalPageCount($response, $pageSize);
+            try {
+                $this->magentoService->getSearchCriteria()
+                    ->setPageSize($pageSize)
+                    ->setCurrentPage($currentPage);
+                /** @var SearchResponseInterface $response */
+                $response = $this->magentoService->send();
+                $this->saveCustomersFromResponse($response);
+                $totalPage = $this->getTotalPageCount($response, $pageSize);
+            } catch (\Exception $e) {
+                $this->logger->error('Error: customer_full_import | PageNo: ' . $currentPage . ' | Message: ' . $e->getMessage());
+            }
             $currentPage++;
             sleep(2);
         }

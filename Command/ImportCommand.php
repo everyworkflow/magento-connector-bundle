@@ -63,7 +63,7 @@ class ImportCommand extends Command
         }
 
         $inputOutput->info('Magento data import started');
-        $this->importProcessor->execute($type);
+        $this->importProcessor->setOutputLogger($output)->execute($type);
         $inputOutput->success('Magento data import completed');
 
         return Command::SUCCESS;
