@@ -39,7 +39,7 @@ class CustomerAttributeImporter extends Importer implements CustomerAttributeImp
             $response = $this->magentoService->send();
             $this->saveAttributesFromResponse($response);
         } catch (\Exception $e) {
-            $this->logger->error('Error: customer_attribute_import | PageNo: ' . $currentPage . ' | Message: ' . $e->getMessage());
+            $this->logger->error('Error: customer_attribute_import | Message: ' . $e->getMessage());
         }
     }
 

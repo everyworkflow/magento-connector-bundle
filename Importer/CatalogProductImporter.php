@@ -75,7 +75,7 @@ class CatalogProductImporter extends Importer implements CatalogProductImporterI
         $pageSize = 100;
         $currentPage = 1;
         $totalPage = 1;
-        while (($currentPage <= $totalPage) && ($currentPage < 5)) {
+        while ($currentPage <= $totalPage) {
             try {
                 $this->magentoService->getSearchCriteria()
                     ->setPageSize($pageSize)

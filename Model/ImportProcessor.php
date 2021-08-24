@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class ImportProcessor implements ImportProcessorInterface
 {
-    protected ?OutputInterface $output;
+    protected ?OutputInterface $output = null;
 
     protected iterable $importers;
     protected LoggerInterface $logger;
@@ -40,7 +40,7 @@ class ImportProcessor implements ImportProcessorInterface
         foreach ($this->importers as $importer) {
             $processingText = 'Processing importer: ' . get_class($importer);
             $this->logger->info($processingText);
-            $this->output->writeln($processingText);
+            $this->output?->writeln($processingText);
             if ($importer instanceof ImporterInterface) {
                 try {
                     $importer->execute($type);
