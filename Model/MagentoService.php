@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace EveryWorkflow\MagentoConnectorBundle\Model;
 
+use EveryWorkflow\MagentoConnectorBundle\Model\Client\MagentoRestClientInterface;
 use EveryWorkflow\RemoteBundle\Model\Client\RemoteClientInterface;
 use EveryWorkflow\RemoteBundle\Model\RemoteRequestInterface;
 use EveryWorkflow\RemoteBundle\Model\RemoteResponseInterface;
@@ -18,9 +19,9 @@ class MagentoService extends RemoteService implements MagentoServiceInterface
     protected MagentoSearchCriteriaInterface $searchCriteria;
 
     public function __construct(
-        RemoteClientInterface          $client,
-        RemoteRequestInterface         $request,
-        RemoteResponseInterface        $responseHandler,
+        RemoteClientInterface $client,
+        RemoteRequestInterface $request,
+        RemoteResponseInterface $responseHandler,
         MagentoSearchCriteriaInterface $searchCriteria
     ) {
         parent::__construct($client, $request, $responseHandler);
@@ -44,8 +45,11 @@ class MagentoService extends RemoteService implements MagentoServiceInterface
         if ($request instanceof MagentoRequestInterface) {
             $request->setSearchCriteria($this->getSearchCriteria());
         }
-        return $this->client
+        /** @var MagentoRestClientInterface $magentoClient */
+        $magentoClient = $this->client;
+        $response = $magentoClient
             ->setResponseHandler($this->getResponseHandler())
             ->send($request);
+        return $response;
     }
 }

@@ -10,24 +10,24 @@ namespace EveryWorkflow\MagentoConnectorBundle\Importer;
 
 use EveryWorkflow\CustomerBundle\Entity\CustomerEntityInterface;
 use EveryWorkflow\CustomerBundle\Repository\CustomerRepositoryInterface;
+use EveryWorkflow\MagentoConnectorBundle\Factory\MagentoServiceFactoryInterface;
 use EveryWorkflow\MagentoConnectorBundle\Model\Importer;
 use EveryWorkflow\MagentoConnectorBundle\Model\ImportProcessorInterface;
-use EveryWorkflow\MagentoConnectorBundle\Model\MagentoServiceInterface;
 use EveryWorkflow\MagentoConnectorBundle\Remote\Customer\SearchResponseInterface;
 use Psr\Log\LoggerInterface;
 
 class CustomerImporter extends Importer implements CustomerImporterInterface
 {
-    protected MagentoServiceInterface $magentoService;
+    protected MagentoServiceFactoryInterface $magentoServiceFactory;
     protected CustomerRepositoryInterface $customerRepository;
     protected LoggerInterface $logger;
 
     public function __construct(
-        MagentoServiceInterface     $magentoService,
+        MagentoServiceFactoryInterface $magentoServiceFactory,
         CustomerRepositoryInterface $customerRepository,
-        LoggerInterface             $ewRemoteErrorLogger
+        LoggerInterface $ewRemoteErrorLogger
     ) {
-        $this->magentoService = $magentoService;
+        $this->magentoServiceFactory = $magentoServiceFactory;
         $this->customerRepository = $customerRepository;
         $this->logger = $ewRemoteErrorLogger;
     }
@@ -35,14 +35,14 @@ class CustomerImporter extends Importer implements CustomerImporterInterface
     public function execute(string $type = ImportProcessorInterface::TYPE_INCREMENTAL): void
     {
         switch ($type) {
-            case ImportProcessorInterface::TYPE_INCREMENTAL:
-            {
-                $this->importIncremental();
-            }
-            case ImportProcessorInterface::TYPE_FULL:
-            {
-                $this->importFull();
-            }
+            case ImportProcessorInterface::TYPE_INCREMENTAL: {
+                    $this->importIncremental();
+                    break;
+                }
+            case ImportProcessorInterface::TYPE_FULL: {
+                    $this->importFull();
+                    break;
+                }
         }
     }
 
@@ -54,12 +54,16 @@ class CustomerImporter extends Importer implements CustomerImporterInterface
         $totalPage = 1;
         while ($currentPage <= $totalPage) {
             try {
-                $this->magentoService->getSearchCriteria()
-                    ->addFilter('created_at', $lastSyncCustomer->getData('updated_at_magento'), 'gteq')
+                $magentoService = $this->magentoServiceFactory
+                    ->setRequestClassName(\EveryWorkflow\MagentoConnectorBundle\Remote\Customer\SearchRequest::class)
+                    ->setResponseHandlerClassName(\EveryWorkflow\MagentoConnectorBundle\Remote\Customer\SearchResponse::class)
+                    ->create();
+                $magentoService->getSearchCriteria()
+                    ->addFilter('updated_at', $lastSyncCustomer->getData('updated_at_magento'), 'gteq')
                     ->setPageSize($pageSize)
                     ->setCurrentPage($currentPage);
                 /** @var SearchResponseInterface $response */
-                $response = $this->magentoService->send();
+                $response = $magentoService->send();
                 $this->saveCustomersFromResponse($response);
                 $totalPage = $this->getTotalPageCount($response, $pageSize);
             } catch (\Exception $e) {
@@ -77,11 +81,15 @@ class CustomerImporter extends Importer implements CustomerImporterInterface
         $totalPage = 1;
         while ($currentPage <= $totalPage) {
             try {
-                $this->magentoService->getSearchCriteria()
-                    ->setPageSize($pageSize)
-                    ->setCurrentPage($currentPage);
+                $magentoService = $this->magentoServiceFactory
+                    ->setRequestClassName(\EveryWorkflow\MagentoConnectorBundle\Remote\Customer\SearchRequest::class)
+                    ->setResponseHandlerClassName(\EveryWorkflow\MagentoConnectorBundle\Remote\Customer\SearchResponse::class)
+                    ->create([
+                        'page_size' => $pageSize,
+                        'current_page' => $currentPage,
+                    ]);
                 /** @var SearchResponseInterface $response */
-                $response = $this->magentoService->send();
+                $response = $magentoService->send();
                 $this->saveCustomersFromResponse($response);
                 $totalPage = $this->getTotalPageCount($response, $pageSize);
             } catch (\Exception $e) {

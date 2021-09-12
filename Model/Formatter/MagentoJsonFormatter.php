@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace EveryWorkflow\MagentoConnectorBundle\Model\Formatter;
 
 use EveryWorkflow\RemoteBundle\Model\Formatter\JsonFormatter;
-use EveryWorkflow\RemoteBundle\Model\RemoteResponseInterface;
 use GuzzleHttp\Psr7\Response;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -45,7 +44,7 @@ class MagentoJsonFormatter extends JsonFormatter implements MagentoJsonFormatter
             if (!isset($data['message'])) {
                 $data['message'] = 'Remote request unauthorized.';
             }
-            $parameters = is_array($data['parameters']) ? $data['parameters'] : [];
+            $parameters = (isset($data['parameters']) && is_array($data['parameters'])) ? $data['parameters'] : [];
             foreach ($parameters as $key => $val) {
                 $parameters['%' . $key] = $val;
             }

@@ -10,24 +10,24 @@ namespace EveryWorkflow\MagentoConnectorBundle\Importer;
 
 use EveryWorkflow\EavBundle\Attribute\BaseAttributeInterface;
 use EveryWorkflow\EavBundle\Repository\AttributeRepositoryInterface;
+use EveryWorkflow\MagentoConnectorBundle\Factory\MagentoServiceFactoryInterface;
 use EveryWorkflow\MagentoConnectorBundle\Model\Importer;
 use EveryWorkflow\MagentoConnectorBundle\Model\ImportProcessorInterface;
-use EveryWorkflow\MagentoConnectorBundle\Model\MagentoServiceInterface;
 use EveryWorkflow\MagentoConnectorBundle\Remote\Customer\AttributeResponseInterface;
 use Psr\Log\LoggerInterface;
 
 class CustomerAttributeImporter extends Importer implements CustomerAttributeImporterInterface
 {
-    protected MagentoServiceInterface $magentoService;
+    protected MagentoServiceFactoryInterface $magentoServiceFactory;
     protected AttributeRepositoryInterface $attributeRepository;
     protected LoggerInterface $logger;
 
     public function __construct(
-        MagentoServiceInterface      $magentoService,
+        MagentoServiceFactoryInterface $magentoServiceFactory,
         AttributeRepositoryInterface $attributeRepository,
-        LoggerInterface              $ewRemoteErrorLogger
+        LoggerInterface $ewRemoteErrorLogger
     ) {
-        $this->magentoService = $magentoService;
+        $this->magentoServiceFactory = $magentoServiceFactory;
         $this->attributeRepository = $attributeRepository;
         $this->logger = $ewRemoteErrorLogger;
     }
@@ -36,7 +36,11 @@ class CustomerAttributeImporter extends Importer implements CustomerAttributeImp
     {
         try {
             /** @var AttributeResponseInterface $response */
-            $response = $this->magentoService->send();
+            $response = $this->magentoServiceFactory
+                ->setRequestClassName(\EveryWorkflow\MagentoConnectorBundle\Remote\Customer\AttributeRequest::class)
+                ->setResponseHandlerClassName(\EveryWorkflow\MagentoConnectorBundle\Remote\Customer\AttributeResponse::class)
+                ->create()
+                ->send();
             $this->saveAttributesFromResponse($response);
         } catch (\Exception $e) {
             $this->logger->error('Error: customer_attribute_import | Message: ' . $e->getMessage());

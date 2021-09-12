@@ -10,25 +10,24 @@ namespace EveryWorkflow\MagentoConnectorBundle\Importer;
 
 use EveryWorkflow\EavBundle\Attribute\BaseAttributeInterface;
 use EveryWorkflow\EavBundle\Repository\AttributeRepositoryInterface;
+use EveryWorkflow\MagentoConnectorBundle\Factory\MagentoServiceFactoryInterface;
 use EveryWorkflow\MagentoConnectorBundle\Model\Importer;
 use EveryWorkflow\MagentoConnectorBundle\Model\ImportProcessorInterface;
-use EveryWorkflow\MagentoConnectorBundle\Model\MagentoServiceInterface;
 use EveryWorkflow\MagentoConnectorBundle\Remote\CatalogProduct\AttributeSearchResponseInterface;
-use EveryWorkflow\RemoteBundle\Model\RemoteResponseInterface;
 use Psr\Log\LoggerInterface;
 
 class CatalogProductAttributeImporter extends Importer implements CatalogProductAttributeImporterInterface
 {
-    protected MagentoServiceInterface $magentoService;
+    protected MagentoServiceFactoryInterface $magentoServiceFactory;
     protected AttributeRepositoryInterface $attributeRepository;
     protected LoggerInterface $logger;
 
     public function __construct(
-        MagentoServiceInterface      $magentoService,
+        MagentoServiceFactoryInterface $magentoServiceFactory,
         AttributeRepositoryInterface $attributeRepository,
         LoggerInterface              $ewRemoteErrorLogger
     ) {
-        $this->magentoService = $magentoService;
+        $this->magentoServiceFactory = $magentoServiceFactory;
         $this->attributeRepository = $attributeRepository;
         $this->logger = $ewRemoteErrorLogger;
     }
@@ -40,11 +39,15 @@ class CatalogProductAttributeImporter extends Importer implements CatalogProduct
         $totalPage = 1;
         while ($currentPage <= $totalPage) {
             try {
-                $this->magentoService->getSearchCriteria()
-                    ->setPageSize($pageSize)
-                    ->setCurrentPage($currentPage);
+                $magentoService = $this->magentoServiceFactory
+                    ->setRequestClassName(\EveryWorkflow\MagentoConnectorBundle\Remote\CatalogProduct\AttributeSearchRequest::class)
+                    ->setResponseHandlerClassName(\EveryWorkflow\MagentoConnectorBundle\Remote\CatalogProduct\AttributeSearchResponse::class)
+                    ->create([
+                        'page_size' => $pageSize,
+                        'current_page' => $currentPage,
+                    ]);
                 /** @var AttributeSearchResponseInterface $response */
-                $response = $this->magentoService->send();
+                $response = $magentoService->send();
                 $this->saveAttributesFromResponse($response);
                 $totalPage = $this->getTotalPageCount($response, $pageSize);
             } catch (\Exception $e) {

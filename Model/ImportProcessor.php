@@ -47,6 +47,7 @@ class ImportProcessor implements ImportProcessorInterface
                 } catch (\Exception $e) {
                     $this->errorLogger->error($e->getMessage());
                 }
+                unset($importer);
             }
         }
     }
