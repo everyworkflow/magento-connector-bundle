@@ -67,9 +67,9 @@ class CustomerCommand extends Command
             return Command::FAILURE;
         }
 
-        // $inputOutput->info('Magento customer attribute data import started');
-        // $this->customerAttributeImporter->execute($type);
-        // $inputOutput->success('Magento customer attribute data import completed');
+        $inputOutput->info('Magento customer attribute data import started');
+        $this->customerAttributeImporter->execute($type);
+        $inputOutput->success('Magento customer attribute data import completed');
 
         $inputOutput->info('Magento customer data import started');
         $this->customerImporter->execute($type);
