@@ -53,7 +53,9 @@ class MagentoRequest extends RemoteRequest implements MagentoRequestInterface
         $searchParams = [];
         foreach ($searchCriteriaData as $key => $val) {
             if ($key === 'filterGroups' && is_array($val)) {
-                $searchParams += $this->mapSearchCriteriaFilterGroup($val);
+                foreach($this->mapSearchCriteriaFilterGroup($val) as $filterCriteria) {
+                    $searchParams[] = $filterCriteria;
+                }
             } elseif (is_string($val) || is_numeric($val)) {
                 $searchParams[] = 'searchCriteria[' . $key . ']' . '=' . $val;
             }
@@ -62,7 +64,7 @@ class MagentoRequest extends RemoteRequest implements MagentoRequestInterface
         return $uri . implode('&', $searchParams);
     }
 
-    protected function mapSearchCriteriaFilterGroup(array $filterGroups)
+    protected function mapSearchCriteriaFilterGroup(array $filterGroups): array
     {
         $searchParams = [];
         foreach ($filterGroups as $groupId => $filters) {
