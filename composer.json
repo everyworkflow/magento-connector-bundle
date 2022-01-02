@@ -10,8 +10,7 @@
         }
     ],
     "require": {
-        "everyworkflow/remote-bundle": "dev-main",
-        "everyworkflow/ecommerce-bundle": "dev-main"
+        "everyworkflow/remote-bundle": "dev-main"
     },
     "autoload": {
         "psr-4": {
