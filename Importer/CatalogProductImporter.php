@@ -105,7 +105,7 @@ class CatalogProductImporter extends Importer implements CatalogProductImporterI
         foreach ($searchResponse->getProducts() as $product) {
             if ($product instanceof CatalogProductEntityInterface) {
                 try {
-                    $this->catalogProductRepository->save($product);
+                    $this->catalogProductRepository->saveOne($product);
                 } catch (\Exception $e) {
                     $this->logger->error($e->getMessage());
                 }

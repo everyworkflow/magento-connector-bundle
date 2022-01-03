@@ -34,7 +34,10 @@ class MagentoJsonFormatter extends JsonFormatter implements MagentoJsonFormatter
         try {
             $remoteContent = $rawResponse->getBody()->getContents();
             if (is_string($remoteContent)) {
-                $data += json_decode($remoteContent, true);
+                $remoteData = json_decode($remoteContent, true);
+                if (is_array($remoteData)) {
+                    $data += $remoteData;
+                }
             }
         } catch (\Exception $e) {
             $this->logger->warning($e->getMessage());

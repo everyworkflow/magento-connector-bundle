@@ -76,6 +76,6 @@ class SearchResponse extends RemoteResponse implements SearchResponseInterface
         }
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->customerRepository->getNewDocument($customerData);
+        return $this->customerRepository->create($customerData);
     }
 }

@@ -79,6 +79,6 @@ class SearchResponse extends RemoteResponse implements SearchResponseInterface
         }
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->catalogProductRepository->getNewDocument($productData);
+        return $this->catalogProductRepository->create($productData);
     }
 }

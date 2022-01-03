@@ -10,7 +10,10 @@
         }
     ],
     "require": {
-        "everyworkflow/remote-bundle": "dev-main"
+        "everyworkflow/remote-bundle": "dev-main",
+        "everyworkflow/catalog-category-bundle": "dev-main",
+        "everyworkflow/catalog-product-bundle": "dev-main",
+        "everyworkflow/catalog-customer-bundle": "dev-main"
     },
     "autoload": {
         "psr-4": {

@@ -63,7 +63,7 @@ class CatalogProductAttributeImporter extends Importer implements CatalogProduct
         foreach ($response->getAttributes() as $attribute) {
             if ($attribute instanceof BaseAttributeInterface) {
                 try {
-                    $this->attributeRepository->save($attribute);
+                    $this->attributeRepository->saveOne($attribute);
                 } catch (\Exception $e) {
                     $this->logger->error($e->getMessage());
                 }

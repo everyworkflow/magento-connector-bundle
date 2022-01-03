@@ -105,7 +105,7 @@ class CustomerImporter extends Importer implements CustomerImporterInterface
         foreach ($searchResponse->getCustomers() as $customer) {
             if ($customer instanceof CustomerEntityInterface) {
                 try {
-                    $this->customerRepository->save($customer);
+                    $this->customerRepository->saveOne($customer);
                 } catch (\Exception $e) {
                     $this->logger->error($e->getMessage());
                 }

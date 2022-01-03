@@ -40,7 +40,7 @@ class Mongo_2021_02_01_00_00_00_Magento_Remote_Reference_Migration implements Mi
 
     protected function addFieldsForCustomer(): void
     {
-        $magentoId = $this->attributeRepository->getNewDocument(
+        $magentoId = $this->attributeRepository->create(
             [
                 'code' => 'magento_id',
                 'name' => 'Magento ID',
@@ -51,9 +51,9 @@ class Mongo_2021_02_01_00_00_00_Magento_Remote_Reference_Migration implements Mi
                 'is_readonly' => true,
                 'sort_order' => 3,
             ]);
-        $this->attributeRepository->save($magentoId);
+        $this->attributeRepository->saveOne($magentoId);
 
-        $updatedAtMagento = $this->attributeRepository->getNewDocument(
+        $updatedAtMagento = $this->attributeRepository->create(
             [
                 'code' => 'updated_at_magento',
                 'name' => 'Updated at Magento',
@@ -64,12 +64,12 @@ class Mongo_2021_02_01_00_00_00_Magento_Remote_Reference_Migration implements Mi
                 'is_readonly' => true,
                 'sort_order' => 3,
             ]);
-        $this->attributeRepository->save($updatedAtMagento);
+        $this->attributeRepository->saveOne($updatedAtMagento);
     }
 
     protected function addFieldsForCatalogProduct(): void
     {
-        $magentoId = $this->catalogProductRepository->getNewDocument(
+        $magentoId = $this->catalogProductRepository->create(
             [
                 'code' => 'magento_id',
                 'name' => 'Magento ID',
@@ -80,9 +80,9 @@ class Mongo_2021_02_01_00_00_00_Magento_Remote_Reference_Migration implements Mi
                 'is_readonly' => true,
                 'sort_order' => 3,
             ]);
-        $this->attributeRepository->save($magentoId);
+        $this->attributeRepository->saveOne($magentoId);
 
-        $updatedAtMagento = $this->catalogProductRepository->getNewDocument(
+        $updatedAtMagento = $this->catalogProductRepository->create(
             [
                 'code' => 'updated_at_magento',
                 'name' => 'Updated at Magento',
@@ -93,7 +93,7 @@ class Mongo_2021_02_01_00_00_00_Magento_Remote_Reference_Migration implements Mi
                 'is_readonly' => true,
                 'sort_order' => 3,
             ]);
-        $this->attributeRepository->save($updatedAtMagento);
+        $this->attributeRepository->saveOne($updatedAtMagento);
     }
 
     public function rollback(): bool
