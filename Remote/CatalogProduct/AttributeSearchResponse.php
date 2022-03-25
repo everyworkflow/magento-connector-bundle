@@ -23,6 +23,9 @@ class AttributeSearchResponse extends RemoteResponse implements AttributeSearchR
         'updated_at',
     ];
 
+
+    protected $catalogProductAttribute = [];
+
     protected CatalogProductRepositoryInterface $catalogProductRepository;
     protected AttributeFactoryInterface $attributeFactory;
     protected LoggerInterface $logger;
@@ -46,6 +49,11 @@ class AttributeSearchResponse extends RemoteResponse implements AttributeSearchR
     {
         $attributes = [];
         $attributeItems = $this->data['items'] ?? [];
+
+        $catalogAttributes = $this->catalogProductRepository->getAttributes();        
+        foreach($catalogAttributes as $catalogAttribute) {
+            $this->catalogProductAttribute[$catalogAttribute->getCode()] = $catalogAttribute;
+        }
 
         foreach ($attributeItems as $item) {
             try {
@@ -90,25 +98,38 @@ class AttributeSearchResponse extends RemoteResponse implements AttributeSearchR
             }
             case 'select':
             {
+                
+                $catalogProductAtributeOptions = $this->getCatalogProductAtributeOptions($mageAttrData['attribute_code']);
                 $attributeData['options'] = [];
                 if (isset($mageAttrData['options']) && is_array($mageAttrData['options'])) {
-                    foreach ($mageAttrData['options'] as $option) {
-                        $attributeData['options'][] = [
-                            'key' => $option['value'] ?? '',
-                            'value' => $option['label'] ?? '',
-                        ];
+                    foreach ($mageAttrData['options'] as $key => $option) {
+                        
+                            $attributeData['options'][] = [
+                                'code' => !isset($catalogProductAtributeOptions[$option['value']]) ? $option['label'] : $catalogProductAtributeOptions[$option['value']]['code'] ,
+                                'label' => !isset($catalogProductAtributeOptions[$option['value']]) ? $option['label'] : $catalogProductAtributeOptions[$option['value']]['label'] ,
+                                'option_type' => '',
+                                'sort_order' => !isset($catalogProductAtributeOptions[$option['value']]) ? $key : $catalogProductAtributeOptions[$option['value']]['sort_order'],
+                                'magento_option_id' => $option['value'] ?? '',
+                            ];
+                        }
                     }
-                }
+                
                 return $this->attributeFactory->createAttributeFromType('select_attribute', $attributeData);
             }
             case 'multiselect':
             {
+
+                $catalogProductAtributeOptions = $this->getCatalogProductAtributeOptions($mageAttrData['attribute_code']);
+
                 $attributeData['options'] = [];
                 if (isset($mageAttrData['options']) && is_array($mageAttrData['options'])) {
-                    foreach ($mageAttrData['options'] as $option) {
+                    foreach ($mageAttrData['options'] as  $key => $option) {
                         $attributeData['options'][] = [
-                            'key' => $option['value'],
-                            'value' => $option['label'],
+                            'code' => !isset($catalogProductAtributeOptions[$option['value']]) ? $option['label'] : $catalogProductAtributeOptions[$option['value']]['code'] ,
+                            'label' => !isset($catalogProductAtributeOptions[$option['value']]) ? $option['label'] : $catalogProductAtributeOptions[$option['value']]['label'] ,
+                            'option_type' => '',
+                            'sort_order' => !isset($catalogProductAtributeOptions[$option['value']]) ? $key : $catalogProductAtributeOptions[$option['value']]['sort_order'],
+                            'magento_option_id' => $option['value'] ?? '',
                         ];
                     }
                 }
@@ -127,5 +148,18 @@ class AttributeSearchResponse extends RemoteResponse implements AttributeSearchR
                 return $this->attributeFactory->createAttributeFromType('text_attribute', $attributeData);
             }
         }
+    }
+
+
+    protected function getCatalogProductAtributeOptions($attributeCode) {
+
+        $catalogProductAtributeOptions = [];
+        $catalogProductAtribute = $this->catalogProductAttribute[$attributeCode]?? NULL;
+        if ($catalogProductAtribute) {
+            foreach($catalogProductAtribute->getData('options') as $option) {
+                $catalogProductAtributeOptions[$option['magento_option_id']] = $option;
+            }
+        }        
+        return $catalogProductAtributeOptions;
     }
 }
