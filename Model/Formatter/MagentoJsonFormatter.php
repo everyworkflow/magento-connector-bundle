@@ -43,7 +43,7 @@ class MagentoJsonFormatter extends JsonFormatter implements MagentoJsonFormatter
             $this->logger->warning($e->getMessage());
         }
 
-        if ($rawResponse->getStatusCode() !== 200) {
+        if (!in_array($rawResponse->getStatusCode(), array(200, 202))) {
             if (!isset($data['message'])) {
                 $data['message'] = 'Remote request unauthorized.';
             }

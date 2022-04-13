@@ -156,7 +156,7 @@ class AttributeSearchResponse extends RemoteResponse implements AttributeSearchR
         $catalogProductAtributeOptions = [];
         $catalogProductAtribute = $this->catalogProductAttribute[$attributeCode]?? NULL;
         if ($catalogProductAtribute) {
-            foreach($catalogProductAtribute->getData('options') as $option) {
+            foreach($catalogProductAtribute->getData('options') ?? []  as $option) {
                 $catalogProductAtributeOptions[$option['magento_option_id']] = $option;
             }
         }        
